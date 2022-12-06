@@ -4,6 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -22,13 +27,28 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 	private Container content;
 	private JLabel frogLabel, car1Label[], car2Label[],car3Label[],log1Label[], log2Label[], log3Label[], backgroundLabel ;
 	private ImageIcon frogImage, car1Image[], car2Image[], car3Image[], log1Image[], log2Image[], log3Image[], backgroundImage;
-	private JLabel score, winMessage;
 	
-	int gameScore = 0;
 	//buttons
 	private JButton StartButton;
 	
-	public GamePrep() {
+	//score label and x, y initial position
+	private JLabel scoreLabel;
+	private int score = 50;
+	private int xInitial = 375;
+	private int yInitial = 500;
+	
+	
+	//ports for connection
+	final static int CLIENT_PORT = 5656;
+	final static int SERVER_PORT = 5556;
+	
+	//main 
+	public static void main( String args []) throws IOException{
+		GamePrep myGame = new GamePrep();
+		myGame.setVisible(true);
+	}
+	
+	public GamePrep() throws IOException {
 		//set up background
 		backgroundImage = new ImageIcon(this.getClass().getResource("/background.png"));
 		backgroundLabel = new JLabel(backgroundImage);
@@ -251,24 +271,18 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 			logs3[i].setStartButton(StartButton);
 		}
 		
-		//add a score label
-		score = new JLabel("Score: ");
-		score.setSize(100, 40);
-		score.setLocation(GameProperties.SCREEN_WIDTH - 100, 0);
-		
-		//add a win label
-		winMessage = new JLabel("You Win ");
-		winMessage.setSize(100, 40);
-		winMessage.setLocation(0, 0);
-		winMessage.setVisible(false);
-		
+		//set size and location score label
+		scoreLabel = new JLabel();
+		scoreLabel.setSize(100, 40);
+		scoreLabel.setLocation(GameProperties.SCREEN_WIDTH - 100, 0);
+
 		//populate screen
 		content.add(StartButton);
 		StartButton.addActionListener(this);
 
-		content.add(score);
-		content.add(winMessage);
+		content.add(scoreLabel);
 		content.add(frogLabel);
+		
 		for(int i=0;i<cars1.length;i++){
 			content.add(car1Label[i]);
 		}
@@ -302,14 +316,166 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
+		final ServerSocket client = new ServerSocket(CLIENT_PORT);
+		
+		//set up listening server
+		Thread t1 = new Thread ( new Runnable () {
+			public void run ( ) {
+				synchronized(this) {
+					
+					System.out.println("Waiting for server responses...");
+					while(true) {
+						Socket s2;
+						try {
+							s2 = client.accept();
+							GameService myService = new GameService(s2, frog);
+							Thread t = new Thread(myService);
+							t.start();
+							
+							
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						System.out.println("client connected");
+					}
+
+				}
+			}
+		});
+		t1.start( );
+		
+		//set up listening server to get frog position
+		Thread t2 = new Thread ( new Runnable () {
+			public void run ( ) {
+				synchronized(this) {
+					
+					while(true) {
+						System.out.println("Getting Frog from server");
+						try {
+							String command = "GETFROG\n";
+							//set up a communication socket
+							Socket s = new Socket("localhost", SERVER_PORT);
+						
+							//Initialize data stream to send data out
+							OutputStream outstream = s.getOutputStream();
+							PrintWriter out = new PrintWriter(outstream);
+						
+							out.println(command);
+							out.flush();
+							out.close();
+							s.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						
+						try {
+							Thread.sleep(500);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+					
+				}
+			}
+		});
+		t2.start( );
+		
+		/*
+		//set up listening server to get cars position
+		Thread t3 = new Thread ( new Runnable () {
+			public void run ( ) {
+				synchronized(this) {
+							
+					while(true) {
+						System.out.println("Getting Cars from server");
+						try {
+							String command = "GETCARS\n";
+							//set up a communication socket
+							Socket s = new Socket("localhost", SERVER_PORT);
+								
+							//Initialize data stream to send data out
+							OutputStream outstream = s.getOutputStream();
+							PrintWriter out = new PrintWriter(outstream);
+								
+							out.println(command);
+							out.flush();
+							out.close();
+							s.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+								
+						try {
+							Thread.sleep(500);
+						} catch (Exception e) {
+									e.printStackTrace();
+						}
+					}
+							
+				}
+			}
+		});
+		t3.start( );
+				
+		//set up listening server to get logs position
+		Thread t4 = new Thread ( new Runnable () {
+			public void run ( ) {
+				synchronized(this) {
+							
+					while(true) {
+						System.out.println("Getting Logs from server");
+						try {
+							String command = "GETLOGS\n";
+							//set up a communication socket
+							Socket s = new Socket("localhost", SERVER_PORT);
+								
+							//Initialize data stream to send data out
+							OutputStream outstream = s.getOutputStream();
+							PrintWriter out = new PrintWriter(outstream);
+								
+							out.println(command);
+							out.flush();
+							out.close();
+							s.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+								
+						try {
+							Thread.sleep(500);
+						} catch (Exception e) {
+									e.printStackTrace();
+						}
+					}
+							
+				}
+			}
+		});
+		t4.start( );	
+		*/	
 	}
 
 
-	//main 
-	public static void main( String args []) {
-		GamePrep myGame = new GamePrep();
-		myGame.setVisible(true);
+	public void Resetfrogger() throws IOException {
+		Score.INSTANCE.minusScore(score);
+		scoreLabel.setText("Score: " + Score.INSTANCE.getScore());
+		frog.setX(xInitial); frog.setY(yInitial);
+		frogLabel.setLocation(frog.getX(), frog.getY());
 	}
+	
+	public void winGame() throws IOException {
+		Score.INSTANCE.addScore(score);
+		scoreLabel.setText("Score: " + Score.INSTANCE.getScore());
+		frog.setX(xInitial); frog.setY(yInitial);
+		frogLabel.setLocation(frog.getX(), frog.getY());
+	}
+	
+	public void AddToScore() {
+		Score.INSTANCE.addScore(score);
+		scoreLabel.setText("Score: " + Score.INSTANCE.getScore());
+	}
+	
 
 	@Override
 	public void keyTyped(KeyEvent e) {}
@@ -321,69 +487,53 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 		int y = frog.getY();
 		
 		//modify position
+		String direction = null;
+		
 		if (e.getKeyCode() == KeyEvent.VK_UP) {
+			direction = "UP";
 
-			//modify frog step to match with lanes
-			if (y <= 450) {
-				y -= GameProperties.CHARACTER_STEP + 14;
-			} else {
-				y -= GameProperties.CHARACTER_STEP;
-			}
-			
-			if (y + frog.getHeight() <= 0) {
-				y = GameProperties.SCREEN_HEIGHT;
-			}
-			
 		} else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-			//modify frog step to match with lanes
-			if (y >= 450) {
-				y += GameProperties.CHARACTER_STEP;
-			} else {
-				y += GameProperties.CHARACTER_STEP + 14;
-			}
-							
-			if (y >= GameProperties.SCREEN_HEIGHT) {
-				y = -1 * frog.getHeight();
-			}
+			direction = "DOWN";
 			
 		} else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-			x -= GameProperties.CHARACTER_STEP;	
-			
-			if (x + frog.getWidth() <= 0) {
-				x = GameProperties.SCREEN_WIDTH;
-			}			
+			direction = "LEFT";
 			
 		} else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-			x += GameProperties.CHARACTER_STEP;	
-			
-			if (x >= GameProperties.SCREEN_WIDTH) {
-				x = -1 * frog.getWidth();
-			}
+			direction = "RIGHT";
 
 		} else {
 			System.out.println("Invalid operation");
 		}
-		//SEND UPDATEFROG 400 500\n
-		String command = "UPDATEFROG" + x + " " + y + "\n";
-		//TO SERVER
-		System.out.println(command);
-		//frog.setX(x);
-		//frog.setY(y);
 		
-		//update graphic
-		//frogLabel.setLocation(frog.getX(), frog.getY());
+		try {
+			//set up a communication socket
+			Socket s = new Socket("localhost", SERVER_PORT);
 		
+			//Initialize data stream to send data out
+			OutputStream outstream = s.getOutputStream();
+			PrintWriter out = new PrintWriter(outstream);
 		
-		if (frog.getY() <= 30) {
-			gameScore += 50;
-			winMessage.setVisible(true);
-			score.setText("Score: " + gameScore);
-			frog.setX(375);
-			frog.setY(500);
-			frog.getX();
-			frog.getY();
+			String command = "MOVE_FROG " + direction;
+			out.println("Sending: " + command);
+			out.flush();
+			out.close();
+			s.close();
+			
+			//update graphic
 			frogLabel.setLocation(frog.getX(), frog.getY());
+			
+			if (frog.getY() <= 30) {
+				winGame();
+			}
+			
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
+		
+		
+		
+		
+		
 	}
 
 
@@ -469,10 +619,8 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 					StartButton.setText("Stop");
 				}
 			}
-
-			
+	
 		}
-		
 		
 	}
 	
