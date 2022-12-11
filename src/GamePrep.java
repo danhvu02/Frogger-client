@@ -331,7 +331,8 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 						Socket s2;
 						try {
 							s2 = client.accept();
-							GameService myService = new GameService(s2, frog);
+							GameService myService = new GameService(s2, frog, cars1, cars2, cars3, logs1, logs2, logs3, car1Label,
+									car2Label, car3Label, log1Label, log2Label, log3Label);
 							Thread t = new Thread(myService);
 							t.start();
 							
@@ -421,7 +422,7 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 		});
 		t3.start( );
 			
-		/*
+		
 		//set up listening server to get logs position
 		Thread t4 = new Thread ( new Runnable () {
 			public void run ( ) {
@@ -457,7 +458,7 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 			}
 		});
 		t4.start( );	
-		*/	
+		
 	}
 
 
@@ -534,54 +535,6 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 			e1.printStackTrace();
 		}
 		
-	}
-
-	public void stopGame() throws UnknownHostException, IOException {
-		//set up a communication socket
-		Socket s = new Socket("localhost", SERVER_PORT);
-	
-		//Initialize data stream to send data out
-		OutputStream outstream = s.getOutputStream();
-		PrintWriter out = new PrintWriter(outstream);
-
-		String command = "STOPGAME\n";
-		
-		System.out.println("Sending: " + command);
-		out.println(command);
-		out.flush();
-		
-		for (Thread t : Thread.getAllStackTraces().keySet()) {
-			if(t.getName().equals("myService")) {
-				t.interrupt();
-			}
-		}	
-		
-		s.close();
-		out.close();
-	}
-	
-	public void startGame() throws UnknownHostException, IOException {
-		//set up a communication socket
-		Socket s = new Socket("localhost", SERVER_PORT);
-	
-		//Initialize data stream to send data out
-		OutputStream outstream = s.getOutputStream();
-		PrintWriter out = new PrintWriter(outstream);
-
-		String command = "STARTGAME\n";
-		
-		System.out.println("Sending: " + command);
-		out.println(command);
-		out.flush();
-		
-		for (Thread t : Thread.getAllStackTraces().keySet()) {
-			if(t.getName().equals("myService")) {
-				t.resume();
-			}
-		}	
-		
-		s.close();
-		out.close();
 	}
 
 	@Override
