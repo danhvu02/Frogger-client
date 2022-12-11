@@ -156,7 +156,72 @@ public void executeCommand(String command) throws IOException{
 			}
 			
 		} else if (command.equals("GETLOGS")) {
-				
+			int log1X = in.nextInt();
+			String space1 = in.next();
+			int log1Y = in.nextInt();
+			String space2 = in.next();
+			this.logsBot[1].setX(log1X);
+			this.logsBot[1].setY(log1Y);
+			
+			int log2X = in.nextInt();
+			String space3 = in.next();
+			int log2Y = in.nextInt();
+			String space4 = in.next();
+			this.logsBot[2].setX(log2X);
+			this.logsBot[2].setY(log2Y);
+			
+			int log3X = in.nextInt();
+			String space5 = in.next();
+			int log3Y = in.nextInt();
+			String space6 = in.next();
+			this.logsBot[3].setX(log3X);
+			this.logsBot[3].setY(log3Y);
+			
+			int log4X = in.nextInt();
+			String space7 = in.next();
+			int log4Y = in.nextInt();
+			String space8 = in.next();
+			this.logsMid[1].setX(log4X);
+			this.logsMid[1].setY(log4Y);
+			
+			int log5X = in.nextInt();
+			String space9 = in.next();
+			int log5Y = in.nextInt();
+			String space10 = in.next();
+			this.logsMid[2].setX(log5X);
+			this.logsMid[2].setY(log5Y);
+			
+			int log6X = in.nextInt();
+			String space11 = in.next();
+			int log6Y = in.nextInt();
+			String space12 = in.next();
+			this.logsMid[3].setX(log6X);
+			this.logsMid[3].setY(log6Y);
+			
+			int log7X = in.nextInt();
+			String space13 = in.next();
+			int log7Y = in.nextInt();
+			String space14 = in.next();
+			this.logsTop[1].setX(log7X);
+			this.logsTop[1].setY(log7Y);
+			
+			int log8X = in.nextInt();
+			String space15 = in.next();
+			int log8Y = in.nextInt();
+			String space16 = in.next();
+			this.logsTop[2].setX(log8X);
+			this.logsTop[2].setY(log8Y);
+			
+			//update graphic
+			for (int i = 0; i < 3; i++) {
+				this.log1Label[i].setLocation(logsBot[i].getX(), logsBot[i].getY());
+				this.log2Label[i].setLocation(logsMid[i].getX(), logsMid[i].getY());
+			}
+			
+			for (int i = 0; i < 2; i++) {
+				this.log3Label[i].setLocation(logsTop[i].getX(), logsTop[i].getY());
+			}
+			
 		} else if (command.equals("STARTGAME")) {
 			
 			
