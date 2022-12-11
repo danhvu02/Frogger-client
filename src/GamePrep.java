@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -36,7 +37,7 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 	private int score = 50;
 	private int xInitial = 375;
 	private int yInitial = 500;
-	
+	private boolean moving;
 	
 	//ports for connection
 	final static int CLIENT_PORT = 5656;
@@ -304,6 +305,8 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 		}
 		content.add(backgroundLabel);
 		
+		moving = false;
+		
 		//thread
 			//Send GETFROG\n to server every 500ms
 		//thread
@@ -381,7 +384,7 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 		});
 		t2.start( );
 		
-		/*
+		
 		//set up listening server to get cars position
 		Thread t3 = new Thread ( new Runnable () {
 			public void run ( ) {
@@ -417,7 +420,8 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 			}
 		});
 		t3.start( );
-				
+			
+		/*
 		//set up listening server to get logs position
 		Thread t4 = new Thread ( new Runnable () {
 			public void run ( ) {
@@ -530,12 +534,55 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 			e1.printStackTrace();
 		}
 		
-		
-		
-		
-		
 	}
 
+	public void stopGame() throws UnknownHostException, IOException {
+		//set up a communication socket
+		Socket s = new Socket("localhost", SERVER_PORT);
+	
+		//Initialize data stream to send data out
+		OutputStream outstream = s.getOutputStream();
+		PrintWriter out = new PrintWriter(outstream);
+
+		String command = "STOPGAME\n";
+		
+		System.out.println("Sending: " + command);
+		out.println(command);
+		out.flush();
+		
+		for (Thread t : Thread.getAllStackTraces().keySet()) {
+			if(t.getName().equals("myService")) {
+				t.interrupt();
+			}
+		}	
+		
+		s.close();
+		out.close();
+	}
+	
+	public void startGame() throws UnknownHostException, IOException {
+		//set up a communication socket
+		Socket s = new Socket("localhost", SERVER_PORT);
+	
+		//Initialize data stream to send data out
+		OutputStream outstream = s.getOutputStream();
+		PrintWriter out = new PrintWriter(outstream);
+
+		String command = "STARTGAME\n";
+		
+		System.out.println("Sending: " + command);
+		out.println(command);
+		out.flush();
+		
+		for (Thread t : Thread.getAllStackTraces().keySet()) {
+			if(t.getName().equals("myService")) {
+				t.resume();
+			}
+		}	
+		
+		s.close();
+		out.close();
+	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {}
@@ -545,84 +592,53 @@ public class GamePrep extends JFrame implements KeyListener, ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		//distinguish among buttons
 		if (e.getSource() == StartButton) {
-			for(int i=0;i<cars1.length;i++){
-				if (cars1[i].getMoving()) {
-					//cars1[i].setMoving(false);
-					//SEND STOPGAME\n to server
-					StartButton.setText("Start");
-				} else {
-					//cars1[i].setMoving(true);
-					//cars1[i].startMoving();
-					//SEND STARTGAME\n to server
+			//set up a communication socket
+			Socket s;
+			try {
+				s = new Socket("localhost", SERVER_PORT);
+				//Initialize data stream to send data out
+				OutputStream outstream = s.getOutputStream();
+				PrintWriter out = new PrintWriter(outstream);
+				
+				if(!moving) {
+
 					StartButton.setText("Stop");
-				}
-			}
-			for(int i=0;i<cars2.length;i++){
-				if (cars2[i].getMoving()) {
-					//cars2[i].setMoving(false);
-					//SEND STOPGAME\n to server
-					StartButton.setText("Start");
-				} else {
-					//cars2[i].setMoving(true);
-					//cars2[i].startMoving();
+					String command = "START";
 					//SEND STARTGAME\n to server
-					StartButton.setText("Stop");
-				}
-			}
-			for(int i=0;i<cars3.length;i++){
-				if (cars3[i].getMoving()) {
-					//cars3[i].setMoving(false);
-					//SEND STOPGAME\n to server
+					System.out.println("Sending: " + command);
+					out.println(command);
+					out.flush();
+					moving = true;
+					
+				}else {
 					StartButton.setText("Start");
-				} else {
-					//cars3[i].setMoving(true);
-					//cars3[i].startMoving();
-					//SEND STARTGAME\n to server
-					StartButton.setText("Stop");
+					String command = "STOP";
+					//SEND STOPGAME\n to server
+					System.out.println("Sending: " + command);
+					out.println(command);
+					out.flush();
+					moving = false;
 				}
+				
+				s.close();
+				out.close();
+				
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
+		
+
 			
-			
-			for(int i=0;i<logs1.length;i++){
-				if (logs1[i].getMoving()) {
-					//logs1[i].setMoving(false);
-					//SEND STOPGAME\n to server
-					StartButton.setText("Start");
-				} else {
-					//logs1[i].setMoving(true);
-					//logs1[i].startMoving();
-					//SEND STARTGAME\n to server
-					StartButton.setText("Stop");
-				}
-			}
-			for(int i=0;i<logs2.length;i++){
-				if (logs2[i].getMoving()) {
-					//logs2[i].setMoving(false);
-					//SEND STOPGAME\n to server
-					StartButton.setText("Start");
-				} else {
-					//logs2[i].setMoving(true);
-					//logs2[i].startMoving();
-					//SEND STARTGAME\n to server
-					StartButton.setText("Stop");
-				}
-			}
-			for(int i=0;i<logs3.length;i++){
-				if (logs3[i].getMoving()) {
-					//logs3[i].setMoving(false);
-					//SEND STOPGAME\n to server
-					StartButton.setText("Start");
-				} else {
-					//logs3[i].setMoving(true);
-					//logs3[i].startMoving();
-					//SEND STARTGAME\n to server
-					StartButton.setText("Stop");
-				}
-			}
+
 	
 		}
 		
 	}
+	
 	
 	
 }

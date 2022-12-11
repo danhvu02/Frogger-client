@@ -3,7 +3,8 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class GameService implements Runnable{
-
+    private volatile boolean running = true; // Run unless told to pause
+    
 	private Socket s;
 	private Scanner in;
 	private Frog frog;
